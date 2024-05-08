@@ -19,135 +19,94 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 
 	io.WriteString(w, "Hello, HTTP!\n")
 }
-
-func createPageFile(w http.ResponseWriter, r *http.Request) {
-
-	fmt.Printf("\nCreating folder and file...\n")
-
-	// Create the folder
-	err := os.Mkdir("/go/src/app/app/from_golangw", 0755)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\nFailed to create folder:", err)
-		return
-	}
-
-	// Create and write content to the file
-	filePath := "/go/src/app/app/from_golangw/page.tsx"
-	fileContent := `import React from 'react'
-
-export default function page() {
-  return (
-    <div className="text-9xl">page from golang</div>
-  )
-}`
-	err = os.WriteFile(filePath, []byte(fileContent), 0644)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\nFailed to create file:", err)
-		return
-	}
-
-	io.WriteString(w, "Folder 'from_golangw' created and file 'page.tsx' created with content.\n")
+func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request){
+	
 }
 
-func file(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf(" \n -->> files func in  in the Next.js directory:\n")
+// func file(w http.ResponseWriter, r *http.Request) {
+// 	fmt.Printf(" \n -->> files func in  in the Next.js directory:\n")
 
-	// Open the directory where Next.js files are mounted
-	dir, err := os.Open("src/routes")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\n got the erron -->", err)
-		return
-	}
-	defer dir.Close()
+// 	// Open the directory where Next.js files are mounted
+// 	dir, err := os.Open("src/routes")
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer dir.Close()
 
-	// Read the directory contents
-	files, err := dir.Readdir(-1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\n got the error -->", err)
-		return
-	}
+// 	// Read the directory contents
+// 	files, err := dir.Readdir(-1)
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
 
-	// Write file names to the response
-	for _, file := range files {
-		io.WriteString(w, file.Name()+"\n")
-	}
-}
+// 	// Write file names to the response
+// 	for _, file := range files {
+// 		io.WriteString(w, file.Name()+"\n")
+// 	}
+// }
 
 func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	userName := query.Get("userName")
-	userNameee := query.Get("h")
 	if userName == "" {
-
-		println(userName, "name was here \n\n")
 		http.Error(w, "userName not provided ", http.StatusBadRequest)
 		return
 	}
 	// -----------------
-	println(userName, "name was here \n\n")
-	println(userNameee, "name was here \n\n")
-	// -----------------
-
-	dir, err := os.Open("src/routes")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\n got the erron -->", err)
-		return
-	}
-	defer dir.Close() // close it later
-	// else case open the dir
-	files, err := dir.ReadDir(-1)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		println("\n got the err while reading the dir  -->", err)
-		return
-	}
-
-	// creating the user dir with the temp in it
+	
 	error := create_dir("src/routes", userName)
 	if error != nil {
-		http.Error(w, error.Error()+"\n got the error creating the username dir  ", http.StatusInternalServerError)
-		return // well if the user name is created keep looking in it to check for the other dir (just return 200 or do  not at all-- if it already exista )
+		var err_if_dir_is_already_there  = "mkdir src/routes/"+userName+": file exists" 
+		fmt.Printf("here %s \n\n",userName)
+		if error.Error() != err_if_dir_is_already_there{
+			print("in the error which  is not about same dir ")
+			http.Error(w, error.Error(), http.StatusInternalServerError)
+			return
+		}
+		 // well if the user name is created keep looking in it to check for the other dir (just return 200 or do  not at all-- if it already exista )
 	}
+
+
 	// creating the temp dir
-	println("src/routes/" + userName + "/temp")
 	error_from_temp_dir := create_dir("src/routes/"+userName , "temp")
 	if error_from_temp_dir != nil {
-		http.Error(w, error_from_temp_dir.Error()+"\n got the error creating the temp dir  ", http.StatusInternalServerError)
-		return
+		print(error_from_temp_dir.Error(),"\n\n")
+		// var err_if_dir_is_already_there  = "mkdir src/routes/"+userName+"/temp: file exists" 
+		var err_if_dir_is_already_there  = "mkdir src/routes/"+userName+": file exists"  // ---bro i don't get it the print statement shows/tells 
+																				// why does this without /temp works , idk
+		if error.Error() != err_if_dir_is_already_there{
+			print("in the error which  is not about same --temp --dir ")
+			http.Error(w, error.Error(), http.StatusInternalServerError)
+			return
+		}
+
+
+
 	}
 	// creating the file in temp dit
 	error_by_creating__first_file_in_temp := only_create_file("+page.svelte", "src/routes/"+userName+"/temp")
 	if error_by_creating__first_file_in_temp != nil {
+		print(error_by_creating__first_file_in_temp.Error())
 		http.Error(w, error_by_creating__first_file_in_temp.Error()+"\n got the error creating the temp dir  ", http.StatusInternalServerError)
 		return
 	}
 
-	var names_of_the_file string
-	for _, file := range files {
-		// if !file.IsDir() {
-		// Check if it's not a directory
-		names_of_the_file = names_of_the_file + "  " + file.Name() + "\n"
-		// }
-	}
+	
 	// http.Response("here is your file "+names_of_the_file,200)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Here are your files: " + names_of_the_file))
 
 }
 
 func main() {
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/hello", getHello)
-	http.HandleFunc("/file", file)
-	http.HandleFunc("/createPageFile", createPageFile)
-	http.HandleFunc("/f", create_temp_and_name_dir_for_user)
-
+	// http.HandleFunc("/file", file)
+	// http.HandleFunc("/createPageFile", createPageFile)
+	http.HandleFunc("/f", create_temp_and_name_dir_for_user) // name it better 
+ 
 	fmt.Printf("\n\n  ----------- go version running  -------------\n\n")
 	fmt.Printf("\n\n  ----------- go server listening on port http://localhost:4696   -------------\n\n")
 	err := http.ListenAndServe(":4696", nil)
@@ -164,7 +123,6 @@ func main() {
 // -------------------Helper function ----------------------------------
 
 func create_dir(path string, name string) error {
-	println("\n\n ----in create dir function ", path, "   ", name)
 	err := os.Mkdir(path+"/"+name, os.ModePerm)
 	if err != nil {
 		// handle error
@@ -174,6 +132,8 @@ func create_dir(path string, name string) error {
 }
 
 func only_create_file(name_of_the_file string, path string) error {
+	// if the file contains the same content keep it there as writing to it or not doing it is same in both cases (here chose
+	//  writing to make sure to retain the default state) 
 	file, err := os.Create(filepath.Join(path, name_of_the_file))
 	if err != nil {
 		return err
@@ -240,7 +200,6 @@ func only_create_file(name_of_the_file string, path string) error {
   
   </style>
 	`
-	println("\n\n in the only_create_file function", name_of_the_file, "   ", path)
 	file.WriteString(svelte_component)
 	defer file.Close() // as i just want to create a file
 	return nil
