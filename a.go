@@ -34,10 +34,111 @@ type json_error_response_query_not_present struct {
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "This is my website!\n")
 }
+
 func getHello(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /hello request\n")
 
 	io.WriteString(w, "Hello, HTTP!\n")
+}
+
+
+// func delete_a_project(w http.ResponseWriter, r *http.Request) {
+// 	os.RemoveAll("src/routes/"+userName+"/"+project_name)
+// }
+
+
+func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet { //-------------- change it -------------------
+		print("Oh  my god")
+		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
+			Error:      "method not allowed",
+			Message:    "only post method is allowed on this route",
+			StatusCode: http.StatusMethodNotAllowed,
+			Username:   "",
+		})
+		return
+	}
+	// ------------modify the function to take a pointer to the value and add it there  -- so i don't have to keep the 
+	// ------------searching the url again  and again 
+	if validate_url_params_if_not_present_write_bad_request(r, w, "userName") {
+		// if true meaning bad request return
+		return
+	}
+	if validate_url_params_if_not_present_write_bad_request(r, w, "project_name") {
+		// if true meaning bad request return
+		return
+	}
+	query := r.URL.Query()
+	userName := query.Get("userName")
+	var project_name  = query.Get("project_name")
+	//  checked for the userName and project_name now just copy the file from  the temp and make a project name dir and add to it 
+	err := create_dir("src/routes/"+userName,project_name)
+	if err != nil{
+
+		// ------------------------ wait ---------------------------------
+		// 	
+		// we can also write to it , or just ignore it -- i think if user want to go for the same they should deleate and create a new one 
+		// that can even be with the same one wit 
+		// 
+		// ------------------------ wait ---------------------------------
+		
+		if "mkdir src/routes/"+userName+"/"+project_name+": file exists" == err.Error(){
+			return_json_error(w, http.StatusBadRequest, error_response_json_for_django_backend{
+				Error_message:     		   "name chosen by the user is same as ",
+				Message_for_the_user: 	   "Project with that name already exists, please chose another name or delete the project with that name first ",
+				StatusCode: 			   http.StatusBadRequest,
+				Username: 				   userName,
+			}) 
+			return
+
+		}else{
+
+			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+				Error_message:     		   "unable to create the project dir. ",
+				Message_for_the_user: 	   "Unable to host your website , please try again  ",
+				StatusCode: 			   http.StatusInternalServerError,
+				Username: 				   userName,
+			})
+			return
+		}
+	}
+	// reading the file form the temp dir 
+	file_in_the_temp_dir , err := os.ReadFile("src/routes/"+userName+"/temp/+page.svelte")
+	if err != nil {
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   "unable to open the temp dir of "+userName,
+			Message_for_the_user: 	   "Oops! an error occured on our side , don't worry try again ",
+			StatusCode: 			   http.StatusInternalServerError,
+			Username: 				   userName,
+		})
+		return
+	} 
+	//  -------------- what if the file already exists(project name ) and what if the user is not created  -- auth is done on 
+	//  -------------- the django backend so trust  it and create it again  -->  check if it exist it not create it if it does prompt 
+	// --------------- the user to provide new pjectname
+	// -----------   ---------
+	// ----- err.Error() is -> mkdir src/routes/monish/erhb: file exists
+	// -----------probally should also delete the project dir if unsuccessful giving user what they want as they should be able to  
+	file, err := os.Create(filepath.Join("src/routes/"+userName+"/"+project_name,"+page.svelte" ))
+	if err != nil {
+		os.RemoveAll("src/routes/"+userName+"/"+project_name) // this one could error so keep that in mind
+		println("in here , i am  in jail irong lung ")
+		//  if i can not create a file in this dir ; if thename chosen by the user is same (as project name ) I am already returning an
+		//  error so that maeans if the request is comming here it is new -> we should create a file (new one ) and that means 
+		//  here we should delete this dir
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   "unable to open the temp dir of "+userName,
+			Message_for_the_user: 	   "Oops! an error occured on our side , don't worry try again ",
+			StatusCode: 			   http.StatusInternalServerError,
+			Username: 				   userName,
+		})
+		return
+	}
+	
+	file.WriteString(string(file_in_the_temp_dir))	
+
+
+
 }
 
 func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
@@ -50,11 +151,12 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 			Error:      "method not allowed",
 			Message:    "only post method is allowed on this route",
 			StatusCode: http.StatusMethodNotAllowed,
-			Username:   userName,
+			Username:   "",
 		})
 		return
 	}
 	if validate_url_params_if_not_present_write_bad_request(r, w, "userName") {
+		// making it look for the userName param in the url and not the userName
 		// if true meaning bad request return
 		return
 	}
@@ -173,38 +275,8 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 	//
 	// -----------------------potential error -----------------------------------------
 
-
-	
-	
-	// os_file2.WriteString(string(llmResponseData.LLMResponse))
-	// os_file2.WriteString("-0--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n------------------------------")
-	// now i think we have data , so lets write to it
-
 }
 
-// func file(w http.ResponseWriter, r *http.Request) {
-// 	fmt.Printf(" \n -->> files func in  in the Next.js directory:\n")
-
-// 	// Open the directory where Next.js files are mounted
-// 	dir, err := os.Open("src/routes")
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer dir.Close()
-
-// 	// Read the directory contents
-// 	files, err := dir.Readdir(-1)
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// Write file names to the response
-// 	for _, file := range files {
-// 		io.WriteString(w, file.Name()+"\n")
-// 	}
-// }
 
 func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 
@@ -259,6 +331,7 @@ func main() {
 	// http.HandleFunc("/createPageFile", createPageFile)
 	http.HandleFunc("/f", create_temp_and_name_dir_for_user) // name it better
 	http.HandleFunc("/l", llm_response_write_it_in_temp_dir) // name it better
+	http.HandleFunc("/p", host_the_temp_one_in_a_production_site) // name it better
 
 	fmt.Printf("\n\n  ----------- go server listening on port http://localhost:4696   -------------\n\n")
 	err := http.ListenAndServe(":4696", nil)
@@ -336,6 +409,7 @@ func return_json_error(w http.ResponseWriter, http_status_error int, error_respo
 }
 
 func create_dir(path string, name string) error {
+	// println("\n path from the create dir func -->",path, " ==name ",name)
 	err := os.Mkdir(path+"/"+name, os.ModePerm)
 	if err != nil {
 		// handle error
