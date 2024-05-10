@@ -80,6 +80,8 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		// we can also write to it , or just ignore it -- i think if user want to go for the same they should deleate and create a new one 
 		// that can even be with the same one wit 
 		// 
+		// 2.> what waht if thetemp dir is empty (it is not , i meant what if user tryied to push trial page that i created to the project )
+		//  well it will not happen as I give them the their first website as a temlate 
 		// ------------------------ wait ---------------------------------
 		
 		if "mkdir src/routes/"+userName+"/"+project_name+": file exists" == err.Error(){
