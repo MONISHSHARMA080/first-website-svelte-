@@ -76,34 +76,22 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 	os_file, err := os.Create(filepath.Join("src/routes/"+userName+"/temp", "+page.svelte"))
 	if err != nil {
 		println("\n -- this functionn above can return error , whereas we should try to make the dirs. and file inside it here , make a integration test for it ---")
-		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
-			Error_message:        "can't open the file for you ",
-			Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try again ",
-			StatusCode:           http.StatusInternalServerError,
-			Username:             userName,
-		})
-	}
-	defer os_file.Close()
-
-	// -----------------------potential error -----------------------------------------
-	//
-	//      this functionn above can return error , whereas we should try to make the dirs. and file inside it here , make a
-	//      integration test for that
-	//
-	//      --maybe add it to the upper
-	//
-	// -----------------------potential error -----------------------------------------
-
-	data, err := os.ReadFile(filepath.Join("src/routes/"+userName+"/temp", "+page.svelte")) // probally should remove it
-
-	if err != nil {
+		// return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+		// 	Error_message:        "can't open the file for you ",
+		// 	Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try again ",
+		// 	StatusCode:           http.StatusInternalServerError,
+		// 	Username:             userName,
+		// })
+		
 		//  well if a user is sent by the djnago and the user does not exist here  then that means something is wrong here  , may be svelte
 		// was down  , so i think we should create it here right not
 		// panic(err)
 
 		// userName dir
 		err := create_dir("src/routes/", userName)
+		println("\nabout to create a username dir")
 		if err != nil {
+			println("\nabout to create a username dir")
 			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
 				Error_message:        "can't open the file for you ",
 				Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try to login again  ",
@@ -113,8 +101,10 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// temp dir
-		erro := create_dir("src/routes"+userName, "temp")
+		println("\n about to create the  temp dir")
+		erro := create_dir("src/routes/"+userName, "temp")
 		if erro != nil {
+			println("\nin the error of  temp dir",erro.Error())
 			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
 				Error_message:        "can't open the file for you ",
 				Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try to login again , that should probally fix it   ",
@@ -123,9 +113,10 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-
+		println("\n about to create a +pages.svelte file ")
 		error_l := only_create_file("+page.svelte", "src/routes/"+userName+"/temp")
 		if error_l != nil {
+			println("\nin the error of creating a svelte file", error_l.Error())
 			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
 				Error_message:        "can't open the file for you ",
 				Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try to login again , that should probally fix it   ",
@@ -134,23 +125,58 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
-	}
-	println(string(data))
-	//----- opening the file again
-	os_file2, err2 := os.OpenFile("src/routes/"+userName+"/temp/+page.svelte", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-	if err2 != nil {
-		// this time just return the json error
-		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
-			Error_message:        "failed to find  the user dir and even tried to create it once ",
-			Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try to login again , that should probally fix it   ",
-			StatusCode:           http.StatusInternalServerError,
+		
+		//  now if the func has not returned (or err != nil in any one ), that means we were able to create the 
+		// 	dir once again and now lets wtite to it 
+		os_file2, err2 := os.OpenFile("src/routes/"+userName+"/temp/+page.svelte", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err2 != nil {
+			// this time just return the json error
+			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+				Error_message:        "failed to find  the user dir and even tried to create it once ",
+				Message_for_the_user: "Sorry we are having trouble keeping our side with us , please try to login again , that should probally fix it   ",
+				StatusCode:           http.StatusInternalServerError,
+				Username:             userName,
+			})
+			return
+		}
+		defer os_file2.Close()
+		println("\nabout to write this to a file --> ", llmResponseData.LLMResponse)
+		os_file2.WriteString(llmResponseData.LLMResponse)
+		// once the file is done writing to it return
+		return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
+			Error_message:        "",
+			Message_for_the_user: "Successfully create your website ",
+			StatusCode:           http.StatusCreated,
 			Username:             userName,
 		})
 		return
 	}
-	defer os_file2.Close()
-	println("\nabout to write this to a file --> ", llmResponseData.LLMResponse)
-	os_file2.WriteString(llmResponseData.LLMResponse)
+
+	defer os_file.Close()
+	println("\n about to write to the file from the first func ")
+	os_file.WriteString(llmResponseData.LLMResponse)
+	return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
+		Error_message:        "",
+		Message_for_the_user: "Successfully create your website ",
+		StatusCode:           http.StatusCreated,
+		Username:             userName,
+	})
+	return
+
+	// -----------------------potential error -----------------------------------------
+	//
+	//      this functionn above can return error , whereas we should try to make the dirs. and file inside it here , make a
+	//      integration test for that
+	//
+	//      --maybe add it to the upper
+	// 
+	//      2.>BUT ONLY WITH THE SECoND FUNCTION , put it in a if statement , I do not want the second func to override the first one 
+	//
+	// -----------------------potential error -----------------------------------------
+
+
+	
+	
 	println("\n\n", string(llmResponseData.LLMResponse), "------------")
 	// os_file2.WriteString(string(llmResponseData.LLMResponse))
 	// os_file2.WriteString("-0--++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n------------------------------")
