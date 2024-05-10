@@ -42,13 +42,51 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 }
 
 
-// func delete_a_project(w http.ResponseWriter, r *http.Request) {
-// 	os.RemoveAll("src/routes/"+userName+"/"+project_name)
-// }
+func delete_a_project(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost { //-------------- change it -------------------
+		print("Oh  my god")
+		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
+			Error:      "method not allowed",
+			Message:    "only post method is allowed on this route",
+			StatusCode: http.StatusMethodNotAllowed,
+			Username:   "",
+		})
+		return
+	}
+	if validate_url_params_if_not_present_write_bad_request(r, w, "userName") {
+		// if true meaning bad request return
+		return
+	}
+	if validate_url_params_if_not_present_write_bad_request(r, w, "project_name") {
+		// if true meaning bad request return
+		return
+	}
+	query := r.URL.Query()
+	userName := query.Get("userName")
+	var project_name  = query.Get("project_name")
+	err:= os.RemoveAll("src/routes/"+userName+"/"+project_name)
+	if err != nil {
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   " can't delete the project -->> "+project_name+"<<-- dir.  ",
+			Message_for_the_user: 	   "Oops! an error occured on our side while deleting your project  ",
+			StatusCode: 			   http.StatusInternalServerError,
+			Username: 				   userName,
+		}) 
+		return
+		
+	}
+	return_json_error(w, http.StatusOK, error_response_json_for_django_backend{
+		Error_message:     		   " Successfully  deleted the project_name -->> "+project_name+"<<--  dir.  ",
+		Message_for_the_user: 	   "Successfully deleted your project",
+		StatusCode: 			   http.StatusOK,
+		Username: 				   userName,
+	}) 
+
+}
 
 
 func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet { //-------------- change it -------------------
+	if r.Method != http.MethodPost { //-------------- change it -------------------
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -137,8 +175,23 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	
-	file.WriteString(string(file_in_the_temp_dir))	
+	_, error_122:= file.WriteString(string(file_in_the_temp_dir))	
+	if error_122!= nil{
 
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   "unable to write to the production dir  of the app   "+project_name+" for ->"+userName,
+			Message_for_the_user: 	   "Oops! an error occured on our side , don't worry try publishing again or create a new one  ",
+			StatusCode: 			   http.StatusInternalServerError,
+			Username: 				   userName,
+		})
+	}
+	
+	return_json_error(w, http.StatusOK, error_response_json_for_django_backend{
+		Error_message:     		   "successfully made the project  "+project_name+" for "+userName,
+		Message_for_the_user: 	   "Yay! your site is created successfully and is live ",
+		StatusCode: 			   http.StatusOK,
+		Username: 				   userName,
+	})
 
 
 }
@@ -146,8 +199,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	userName := query.Get("userName")
-	print("method of the request -->>", r.Method, "   ", http.MethodGet, r.Method == http.MethodGet, " \n")
-	if r.Method != http.MethodGet { //-------------- change it -------------------
+	if r.Method != http.MethodPost { 
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -266,26 +318,36 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 		Username:             userName,
 	})
 
-	// -----------------------potential error -----------------------------------------
-	//
-	//      this functionn above can return error , whereas we should try to make the dirs. and file inside it here , make a
-	//      integration test for that
-	//
-	//      --maybe add it to the upper
-	// 
-	//      2.>BUT ONLY WITH THE SECoND FUNCTION , put it in a if statement , I do not want the second func to override the first one 
-	//
-	// -----------------------potential error -----------------------------------------
-
 }
 
 
 func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != http.MethodPost { 
+		print("Oh  my god")
+		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
+			Error:      "method not allowed",
+			Message:    "only post method is allowed on this route",
+			StatusCode: http.StatusMethodNotAllowed,
+			Username:   "",
+		})
+		return
+	}
+
 	query := r.URL.Query()
 	userName := query.Get("userName")
 	if userName == "" {
-		http.Error(w, "userName not provided ", http.StatusBadRequest)
+		// http.Error(w, "userName not provided ", http.StatusBadRequest)
+		return_json_error(w, http.StatusNotAcceptable, error_response_json_for_django_backend{
+			Error_message:        "userName not provided",
+			Message_for_the_user: "userName not provided, if the error continue  you should try logging in again  ",
+			StatusCode:           http.StatusNotAcceptable,
+			Username:             userName,
+		})
+
+		// ------------------------ potential error ------------------------------------
+		// >> (<-means done) i should tell my backend this error is for it , meaning  it has not provided the username , user should not be alerted
+		// ------------------------ potential error ------------------------------------
 		return
 	}
 	// -----------------
@@ -295,8 +357,12 @@ func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 		var err_if_dir_is_already_there = "mkdir src/routes/" + userName + ": file exists"
 		fmt.Printf("here %s \n\n", userName)
 		if error.Error() != err_if_dir_is_already_there {
-			print("in the error which  is not about same dir ")
-			http.Error(w, error.Error(), http.StatusInternalServerError)
+			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+				Error_message:        "failed to create the username dir  ",
+				Message_for_the_user: "userName not provided, if the error continue  you should try logging in again  ",
+				StatusCode:           http.StatusInternalServerError,
+				Username:             userName,
+			})  
 			return
 		}
 		// well if the user name is created keep looking in it to check for the other dir (just return 200 or do  not at all-- if it already exista )
@@ -311,29 +377,43 @@ func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 		// why does this without /temp works , idk
 		if error.Error() != err_if_dir_is_already_there {
 			print("in the error which  is not about same --temp --dir ")
-			http.Error(w, error.Error(), http.StatusInternalServerError)
+			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+				Error_message:        "failed to create the temp dir for the "+userName,
+				Message_for_the_user: "Oops! an error occured on our side while creating you account your account , Loggin again should probally solve it  ",
+				StatusCode:           http.StatusInternalServerError,
+				Username:             userName,
+			})
 			return
 		}
 	}
 	// creating the file in temp dit
 	error_by_creating__first_file_in_temp := only_create_file("+page.svelte", "src/routes/"+userName+"/temp")
 	if error_by_creating__first_file_in_temp != nil {
-		print(error_by_creating__first_file_in_temp.Error())
 		http.Error(w, error_by_creating__first_file_in_temp.Error()+"\n got the error creating the temp dir  ", http.StatusInternalServerError)
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:        "failed to create the +pages.svelte file in temp dir for  the "+userName,
+			Message_for_the_user: "Oops! an error occured on our side while creating you account your account , Loggin again should probally solve it",
+			StatusCode:           http.StatusInternalServerError,
+			Username:             userName,
+		})
 		return
 	}
 	// http.Response("here is your file "+names_of_the_file,200)
-	w.WriteHeader(http.StatusOK)
+	return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
+		Error_message:        "successfully created the user ",
+		Message_for_the_user: "Successfully amde your accunt , your temp website is live ",
+		StatusCode:           http.StatusCreated,
+		Username:             userName,
+	})
 }
 
 func main() {
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/hello", getHello)
-	// http.HandleFunc("/file", file)
-	// http.HandleFunc("/createPageFile", createPageFile)
-	http.HandleFunc("/f", create_temp_and_name_dir_for_user) // name it better
-	http.HandleFunc("/l", llm_response_write_it_in_temp_dir) // name it better
-	http.HandleFunc("/p", host_the_temp_one_in_a_production_site) // name it better
+	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // name it better
+	http.HandleFunc("/llm_response_write_it_in_temp_dir", llm_response_write_it_in_temp_dir) // name it better
+	http.HandleFunc("/host_the_temp_one_in_a_production_site", host_the_temp_one_in_a_production_site) // name it better
+	http.HandleFunc("/delete_a_project", delete_a_project) // name it better
 
 	fmt.Printf("\n\n  ----------- go server listening on port http://localhost:4696   -------------\n\n")
 	err := http.ListenAndServe(":4696", nil)

@@ -36,3 +36,8 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+
+## For the djnago bakckend 
+```406	Not Acceptable means it is the error for the django and not for the user , meaning (here implemented if the userName is not provided ) means re-send the request ```
+
+for python -->>pip install random-username
