@@ -43,7 +43,7 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 
 
 func delete_a_project(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet { //-------------- change it -------------------
+	if r.Method != http.MethodDelete { //-------------- change it -------------------
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -64,6 +64,28 @@ func delete_a_project(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	userName := query.Get("userName")
 	var project_name  = query.Get("project_name")
+	dir_entries , error :=os.ReadDir("src/routes/"+userName+"/"+project_name)
+	if error!= nil {
+		
+		if error.Error() == "open src/routes/"+userName+"/"+project_name+": no such file or directory"{
+			return_json_error(w, http.StatusBadRequest, error_response_json_for_django_backend{
+				Error_message:     		   " can't delete the project -->> "+project_name+"<<-- dir.",
+				Message_for_the_user: 	   "Oops! A project with that name was not found ",
+				StatusCode: 			   http.StatusBadRequest, // http.StatusNotFound (404) <<- is the good one here   
+				Username: 				   userName,
+			}) 
+			return
+		}
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   " can't delete the project -->> "+project_name+"<<-- dir.  ",
+			Message_for_the_user: 	   "Oops! A project with that name was not found ",
+			StatusCode: 			   http.StatusInternalServerError, // http.StatusNotFound (404) <<- is the good one here   
+			Username: 				   userName,
+		}) 
+		return
+	}
+	println(dir_entries)
+
 	err:= os.RemoveAll("src/routes/"+userName+"/"+project_name)
 	if err != nil {
 		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
@@ -127,7 +149,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		
 		if "mkdir src/routes/"+userName+"/"+project_name+": file exists" == err.Error(){
 			return_json_error(w, http.StatusBadRequest, error_response_json_for_django_backend{
-				Error_message:     		   "name chosen by the user is same as ",
+				Error_message:     		   "name chosen by the user--"+userName+" is same as "+project_name,
 				Message_for_the_user: 	   "Project with that name already exists, please chose another name or delete the project with that name first ",
 				StatusCode: 			   http.StatusBadRequest,
 				Username: 				   userName,
@@ -138,7 +160,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 
 			return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
 				Error_message:     		   "unable to create the project dir. ",
-				Message_for_the_user: 	   "Unable to host your website , please try again  ",
+				Message_for_the_user: 	   "Unable to host your website , please try again , if that does not work try a different project name ",
 				StatusCode: 			   http.StatusInternalServerError,
 				Username: 				   userName,
 			})
@@ -164,7 +186,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 	// -----------probally should also delete the project dir if unsuccessful giving user what they want as they should be able to  
 	file, err := os.Create(filepath.Join("src/routes/"+userName+"/"+project_name,"+page.svelte" ))
 	if err != nil {
-		os.RemoveAll("src/routes/"+userName+"/"+project_name) // this one could error so keep that in mind
+		os.RemoveAll("src/routes/"+userName+"/"+project_name) // --------------------||==>>this one could error so keep that in mind
 		println("in here , i am  in jail irong lung ")
 		//  if i can not create a file in this dir ; if thename chosen by the user is same (as project name ) I am already returning an
 		//  error so that maeans if the request is comming here it is new -> we should create a file (new one ) and that means 
@@ -177,7 +199,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		})
 		return
 	}
-	
+
 	_, error_122:= file.WriteString(string(file_in_the_temp_dir))	
 	if error_122!= nil{
 
