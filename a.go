@@ -43,7 +43,7 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 
 
 func delete_a_project(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost { //-------------- change it -------------------
+	if r.Method != http.MethodGet { //-------------- change it -------------------
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -102,6 +102,7 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		// if true meaning bad request return
 		return
 	}
+	// println("\n query := r.URL.Query()",r.URL.Query().Get("userName"))
 	if validate_url_params_if_not_present_write_bad_request(r, w, "project_name") {
 		// if true meaning bad request return
 		return
@@ -120,6 +121,8 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 		// 
 		// 2.> what waht if thetemp dir is empty (it is not , i meant what if user tryied to push trial page that i created to the project )
 		//  well it will not happen as I give them the their first website as a temlate 
+		// 
+		//  3.> what if the user name and the project name is wrong and does not exist 
 		// ------------------------ wait ---------------------------------
 		
 		if "mkdir src/routes/"+userName+"/"+project_name+": file exists" == err.Error(){
@@ -323,7 +326,7 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 
 func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost { 
+	if r.Method != http.MethodGet { 
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -406,6 +409,18 @@ func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 		Username:             userName,
 	})
 }
+func getHello2(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("got /hello request\n")
+  fmt.Printf("\nresponse from the go server -->>",w)
+	return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
+		Error_message:        "successfully created the user ",
+		Message_for_the_user: "Successfully amde your accunt , your temp website is live ",
+		StatusCode:           http.StatusCreated,
+    Username:             "userName",
+	})
+	io.WriteString(w, "Hello, HTTP!\n")
+}
+
 
 func main() {
 	http.HandleFunc("/", getRoot)
@@ -414,6 +429,7 @@ func main() {
 	http.HandleFunc("/llm_response_write_it_in_temp_dir", llm_response_write_it_in_temp_dir) // name it better
 	http.HandleFunc("/host_the_temp_one_in_a_production_site", host_the_temp_one_in_a_production_site) // name it better
 	http.HandleFunc("/delete_a_project", delete_a_project) // name it better
+  http.HandleFunc("/store_llm_response_in_trial_dir",getHello2)
 
 	fmt.Printf("\n\n  ----------- go server listening on port http://localhost:4696   -------------\n\n")
 	err := http.ListenAndServe(":4696", nil)
@@ -435,7 +451,7 @@ func get_json_field_out_of_body_and_write_error_on_response(w http.ResponseWrite
 	println("\n json response from ===", json_response_variable)
 
 	if err != nil {
-		// Handle JSON decoding error
+		// Handle JSON decoding error 
 		return_json_error(w, http.StatusBadRequest, json_error_response_query_not_present{
 			Error:      "Invalid JSON input",
 			Message:    "llm_response not provided in the json in request body",
