@@ -25,6 +25,13 @@ type error_response_json_for_django_backend struct {
 	StatusCode           int    `json:"status_code"`
 	Username             string `json:"username"`
 }
+type error_response_json_for_django_backend_with_an_array_as_value struct {
+	Error_message        string `json:"error_message"`
+	Message_for_the_user string `json:"message_for_the_user"`
+	StatusCode           int    `json:"status_code"`
+	Username             string `json:"username"`
+	Values              []string `json:"values"`
+}
 type json_error_response_query_not_present struct {
 	Error      string `json:"error"`
 	Message    string `json:"message"`
@@ -39,6 +46,80 @@ func getHello(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("got /hello request\n")
 
 	io.WriteString(w, "Hello, HTTP!\n")
+}
+func get_all_the_projects_of_the_user(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet { //-------------- change it -------------------
+		print("Oh  my god")
+		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
+			Error:      "method not allowed",
+			Message:    "only get method is allowed on this route",
+			StatusCode: http.StatusMethodNotAllowed,
+			Username:   "",
+		})
+		return
+	}
+	if validate_url_params_if_not_present_write_bad_request(r, w, "userName") {
+		// if true meaning bad request return
+		return
+	}
+	query := r.URL.Query()
+	userName := query.Get("userName")
+	dir, err := os.Open("src/routes/"+userName)
+	if err!= nil {
+		if err.Error() == "open src/routes/"+userName+": no such file or directory"{
+			// --------------------- wait ---------------
+			// if the user name is not found , that meand that the backend send such response or that usr does not exist , or the dir for the user is not created yet
+			//  check if the user name is ../ they can see the files in the dir 
+			// --------------------- wait ---------------
+			return_json_error(w, http.StatusBadRequest, error_response_json_for_django_backend{
+				Error_message:     		   " dir with that username not found  -->> "+userName+"<<-- dir.",
+				Message_for_the_user: 	   "Oops! Your name was not found on the server ",
+				StatusCode: 			   http.StatusBadRequest, // http.StatusNotFound (404) <<- is the good one here   
+				Username: 				   userName,
+			}) 
+			return
+		}
+
+
+	
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend{
+			Error_message:     		   " can't open the userName  dir for -->> "+userName+"<<-- dir.\n error Backend got-->>  "+err.Error(),
+			Message_for_the_user: 	   "Oops! An error occurred on our side , can't get the names of your projects",
+			StatusCode: 			   http.StatusInternalServerError, // http.StatusNotFound (404) <<- is the good one here   
+			Username: 				   userName,
+		}) 
+		return
+	}
+	defer dir.Close()
+	println(dir)
+	things_in_dir,error_form_reading_dir := dir.ReadDir(-1)
+	if error_form_reading_dir != nil {
+		return_json_error(w, http.StatusInternalServerError, error_response_json_for_django_backend_with_an_array_as_value{
+			Error_message:     		   "can't open the userName  dir for -->> "+userName+"<<-- dir.\n error Backend got-->>  "+err.Error(),
+			Message_for_the_user: 	   "Oops! An error occurred on our side , can't get the names of your projects",
+			StatusCode: 			   http.StatusInternalServerError, // http.StatusNotFound (404) <<- is the good one here   
+			Username: 				   userName,
+			Values: 					[]string{},
+		}) 
+		return
+	}
+	var directories []string
+    for _, entry := range things_in_dir {
+        if entry.IsDir() {
+			println("name of the dir ")
+            directories = append(directories, entry.Name())
+        }
+    }
+	
+	return_json_error(w, http.StatusOK, error_response_json_for_django_backend_with_an_array_as_value{
+		Error_message:     "" ,
+		Message_for_the_user: "",
+		StatusCode:        http.StatusOK,
+		Username:          userName,
+		Values:       directories,
+	})
+
+
 }
 
 
@@ -347,8 +428,8 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 
 
 func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodGet { 
+	println("\n \n ------- form the temp dir for the new user func --------\n\n")
+	if r.Method != http.MethodPost { 
 		print("Oh  my god")
 		return_json_error(w, http.StatusMethodNotAllowed, error_response_json{
 			Error:      "method not allowed",
@@ -450,7 +531,8 @@ func main() {
 	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // name it better
 	http.HandleFunc("/llm_response_write_it_in_temp_dir", llm_response_write_it_in_temp_dir) // name it better
 	http.HandleFunc("/host_the_temp_one_in_a_production_site", host_the_temp_one_in_a_production_site) // name it better
-	http.HandleFunc("/delete_a_project", delete_a_project) // name it better
+	http.HandleFunc("/delete_a_project", delete_a_project) 
+	http.HandleFunc("/get_all_the_projects_of_the_user", get_all_the_projects_of_the_user) 
   http.HandleFunc("/store_llm_response_in_trial_dir",getHello2)
 
 	fmt.Printf("\n\n  ----------- go server listening on port http://localhost:4696   -------------\n\n")
