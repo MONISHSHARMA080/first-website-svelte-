@@ -43,9 +43,9 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func getHello(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("got /hello request\n")
+	// fmt.Printf("got /hello request\n")
 
-	io.WriteString(w, "Hello, HTTP!\n")
+	io.WriteString(w, "Hello, World from me !\n")
 }
 func get_all_the_projects_of_the_user(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet { //-------------- change it -------------------
@@ -106,7 +106,7 @@ func get_all_the_projects_of_the_user(w http.ResponseWriter, r *http.Request) {
 	var directories []string
     for _, entry := range things_in_dir {
         if entry.IsDir() {
-			println("name of the dir ")
+			println("name of the dir ",entry.Name())
             directories = append(directories, entry.Name())
         }
     }
@@ -528,10 +528,10 @@ func getHello2(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/hello", getHello)
-	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // name it better
-	http.HandleFunc("/llm_response_write_it_in_temp_dir", llm_response_write_it_in_temp_dir) // name it better
-	http.HandleFunc("/host_the_temp_one_in_a_production_site", host_the_temp_one_in_a_production_site) // name it better
-	http.HandleFunc("/delete_a_project", delete_a_project) 
+	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // done in django 
+	http.HandleFunc("/llm_response_write_it_in_temp_dir", llm_response_write_it_in_temp_dir) // done in django 
+	http.HandleFunc("/host_the_temp_one_in_a_production_site", host_the_temp_one_in_a_production_site) // done in django 
+	http.HandleFunc("/delete_a_project", delete_a_project)  // done in django 
 	http.HandleFunc("/get_all_the_projects_of_the_user", get_all_the_projects_of_the_user) 
   http.HandleFunc("/store_llm_response_in_trial_dir",getHello2)
 
