@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/joho/godotenv"
 )
 
 type LLMResponse struct {
@@ -24,6 +27,13 @@ type error_response_json_for_django_backend struct {
 	Message_for_the_user string `json:"message_for_the_user"`
 	StatusCode           int    `json:"status_code"`
 	Username             string `json:"username"`
+}
+type response_json_for_django_backend struct {
+	Error_message                    string `json:"error_message"`
+	Link_for_the_current_site        string `json:"link_for_the_current_site"`
+	Message_for_the_user             string `json:"message_for_the_user"`
+	StatusCode                       int    `json:"status_code"`
+	Username                         string `json:"username"`
 }
 type error_response_json_for_django_backend_with_an_array_as_value struct {
 	Error_message        string `json:"error_message"`
@@ -291,9 +301,11 @@ func host_the_temp_one_in_a_production_site(w http.ResponseWriter, r *http.Reque
 			Username: 				   userName,
 		})
 	}
+	println("\n\nos env -->>",os.Getenv("SVELTE_URL_WITH_SLASH"))
 	
-	return_json_error(w, http.StatusOK, error_response_json_for_django_backend{
+	return_json_error(w, http.StatusOK, response_json_for_django_backend{
 		Error_message:     		   "successfully made the project  "+project_name+" for "+userName,
+		Link_for_the_current_site: os.Getenv("SVELTE_URL_WITH_SLASH")+userName+"/"+project_name,
 		Message_for_the_user: 	   "Yay! your site is created successfully and is live ",
 		StatusCode: 			   http.StatusOK,
 		Username: 				   userName,
@@ -526,6 +538,13 @@ func getHello2(w http.ResponseWriter, r *http.Request) {
 
 
 func main() {
+	println("i reached down ")
+erro := godotenv.Load()
+if erro != nil {
+	  println("i reached down----- ")
+    log.Fatal("Error loading .env file")
+  }
+  println("trying the env in the main func", os.Getenv("SVELTE_URL_WITH_SLASH"))
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/hello", getHello)
 	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // done in django 
@@ -544,6 +563,12 @@ func main() {
 		os.Exit(1)
 
 	}
+	// erro := godotenv.Load()
+    // if erro != nil {
+    //     // log.Fatal("Error loading .env file")
+	// 	panic("Error Loading the .env file")
+    // }
+
 
 }
 
