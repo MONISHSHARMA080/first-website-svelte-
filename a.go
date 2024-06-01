@@ -429,9 +429,10 @@ func llm_response_write_it_in_temp_dir(w http.ResponseWriter, r *http.Request) {
 	defer os_file.Close()
 	println("\n about to write to the file from the first func ")
 	os_file.WriteString(llmResponseData.LLMResponse)
-	return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
+	return_json_error(w, http.StatusCreated, response_json_for_django_backend{
 		Error_message:        "",
 		Message_for_the_user: "Successfully create your website ",
+		Link_for_the_current_site: os.Getenv("SVELTE_URL_WITH_SLASH")+userName+"/temp",
 		StatusCode:           http.StatusCreated,
 		Username:             userName,
 	})
@@ -545,6 +546,7 @@ if erro != nil {
     log.Fatal("Error loading .env file")
   }
   println("trying the env in the main func", os.Getenv("SVELTE_URL_WITH_SLASH"))
+
 	http.HandleFunc("/", getRoot)
 	http.HandleFunc("/hello", getHello)
 	http.HandleFunc("/create_temp_and_name_dir_for_user", create_temp_and_name_dir_for_user) // done in django 
