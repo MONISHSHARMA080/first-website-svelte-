@@ -155,6 +155,15 @@ func delete_a_project(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	userName := query.Get("userName")
 	var project_name  = query.Get("project_name")
+	if project_name == "temp"{
+		return_json_error(w, http.StatusBadRequest, error_response_json_for_django_backend{
+			Error_message:     		   " can't delete the project -->> "+project_name+"<<-- dir.",
+			Message_for_the_user: 	   "Oops! can't delete the temp, if you want to change it generate a new one ",
+			StatusCode: 			   http.StatusBadRequest, // http.StatusNotFound (404) <<- is the good one here   
+			Username: 				   userName,
+		}) 
+		return
+	}
 	dir_entries , error :=os.ReadDir("src/routes/"+userName+"/"+project_name)
 	if error!= nil {
 		
