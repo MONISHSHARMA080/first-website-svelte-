@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	// "log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -529,7 +529,7 @@ func create_temp_and_name_dir_for_user(w http.ResponseWriter, r *http.Request) {
 	// http.Response("here is your file "+names_of_the_file,200)
 	return_json_error(w, http.StatusCreated, error_response_json_for_django_backend{
 		Error_message:        "successfully created the user ",
-		Message_for_the_user: "Successfully amde your accunt , your temp website is live ",
+		Message_for_the_user: "Successfully made your account , your temp website is live ",
 		StatusCode:           http.StatusCreated,
 		Username:             userName,
 	})
@@ -552,7 +552,7 @@ func main() {
 erro := godotenv.Load()
 if erro != nil {
 	  println("i reached down----- ")
-    log.Fatal("Error loading .env file")
+    // log.Fatal("Error loading .env file")
   }
   println("trying the env in the main func", os.Getenv("SVELTE_URL_WITH_SLASH"))
 
