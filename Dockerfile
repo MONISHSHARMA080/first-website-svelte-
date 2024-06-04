@@ -1,27 +1,20 @@
-# Build the Go server
-FROM golang AS go-builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY *.go ./
-RUN CGO_ENABLED=0 GOOS=linux go build -x -o go_server
 
-# Build the Svelte app
-FROM node:21-alpine AS node-builder
-WORKDIR /app
-COPY package.json package-lock.json postcss.config.js svelte.config.js tsconfig.json tailwind.config.js vite.config.ts  ./
+FROM node:21-alpine as build
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Copy package.json and package-lock.json to the container
+COPY package*.json ./
+
+# Install the dependencies
 RUN npm install
-# COPY . .
-COPY ./entrypoint.sh /app/
-COPY src/ /app/src/.
-RUN chmod +x /app/entrypoint.sh
-# RUN npm run build
 
-# Final stage
-# FROM node:21-alpine
-# WORKDIR /app
-COPY --from=go-builder /app/. /.
-# COPY --from=node-builder /app/. /.
+# Copy the rest of the application code to the container
+COPY . .
 
-EXPOSE 4696 5173
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Expose the port that the app runs on
+EXPOSE 5173
+
+# Command to run the app in development mode
+CMD ["npm", "run", "dev"]
