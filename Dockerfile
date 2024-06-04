@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -x -o go_server
 # Build the Svelte app
 FROM node:21-alpine AS node-builder
 WORKDIR /app
-COPY package.json package-lock.json postcss.config.js svelte.config.js  tsconfig.json   ./
+COPY package.json package-lock.json postcss.config.js svelte.config.js tsconfig.json tailwind.config.js vite.config.ts  ./
 RUN npm install
 # COPY . .
 COPY ./entrypoint.sh /app/
