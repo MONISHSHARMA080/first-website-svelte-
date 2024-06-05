@@ -1,9 +1,9 @@
 FROM golang:1.22 as go-builder
 WORKDIR /app
 COPY a.go ./
-# COPY go.sum ./
-# COPY go.mod  ./
-# RUN go mod download
+COPY go.sum ./
+COPY go.mod  ./
+RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux go build -x -o go_server
 
 FROM node:21-alpine as build
