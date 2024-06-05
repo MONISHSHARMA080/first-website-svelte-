@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	// "log"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -552,7 +552,7 @@ func main() {
 erro := godotenv.Load()
 if erro != nil {
 	  println("i reached down----- ")
-    // log.Fatal("Error loading .env file")
+    log.Fatal("Error loading .env file")
   }
   println("trying the env in the main func", os.Getenv("SVELTE_URL_WITH_SLASH"))
 

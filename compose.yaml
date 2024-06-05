@@ -3,7 +3,7 @@ services:
   app:
     build: .
     environment:
-      - SVELTE_URL_WITH_SLASH=80
+      - SVELTE_URL_WITH_SLASH=https://generate-website.fly.dev/
     ports:
       - "80:5173"
       - "4696:4696"
