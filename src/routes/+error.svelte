@@ -39,9 +39,7 @@
       /* Define your own pulse animation */
     }
   
-    .space-y-4 > * + * {
-      margin-top: 1rem;
-    }
+    
   
     .text-6xl {
       font-size: 4rem;
@@ -52,10 +50,7 @@
       font-weight: bold;
     }
   
-    .text-red-500 {
-      color: #dc2626;
-    }
-  
+   
     .text-2xl {
       font-size: 1.5rem;
     }
